@@ -1,0 +1,495 @@
+---
+title: "**Tækniskýrsla - Hönnun og framkvæmd tilrauna**"
+author: "Brynjar Ari, Einar Geir, Halldór Andri og Jakob Stefán"
+date: "2025-04-02"
+output: 
+  html_document:
+    theme: lumen
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo=FALSE}
+# 1. Skilgreinum hvaða samsetningar (treatment combinations) eru:
+combinations <- c(
+  "(1)","a","b","ab","c","ac","bc","abc",
+  "d","ad","bd","abd","dc","acd","bcd","abcd",
+  "e","ae","be","abe","ce","ace","bce","abce",
+  "de","ade","bde","abde","cde","acde","bcde","abcde"
+)
+
+# 2. Skilgreinum svörun Y_1 í sömu röð:
+Y_1 <- c(
+  3.1, 2.68, 3.13, 2.51, 4.3, 3.73, 3.33, 4.16,
+  2.95, 3.26, 2.65, 2.96, 3.83, 4.08, 3.03, 3.88,
+  3.21, 3.05, 2.71, 3.08, 2.96, 3.01, 3.51, 3.48,
+  2.76, 2.90, 2.43, 2.55, 3.95, 3.89, 3.45, 3.33
+)
+
+# 3. Skilgreinum svörun Y_2 í sömu röð:
+Y_2 <- c(
+  21, 11, 60, 31, 37, 24, 10, 30,
+  11,  8,  4,  4, 21,  7,  8,  6,
+  30, 86,125, 61,  0, 41, 37, 59,
+   6,  7,  2,  0, 21, 17, 10, 25
+)
+
+# 4. Búum til dálka fyrir hvern þátt a, b, c, d, e sem 0/1-breytur.
+#    Við athugum hvort samsetningin innihaldi stafinn 'a', 'b', 'c', 'd', eða 'e':
+a_fac <- as.numeric(grepl("a", combinations))
+b_fac <- as.numeric(grepl("b", combinations))
+c_fac <- as.numeric(grepl("c", combinations))
+d_fac <- as.numeric(grepl("d", combinations))
+e_fac <- as.numeric(grepl("e", combinations))
+
+# 5. Búum til lokagögnin sem data.frame:
+df <- data.frame(
+  combination = combinations,
+  a = a_fac,
+  b = b_fac,
+  c_var = c_fac,
+  d = d_fac,
+  e = e_fac,
+  Y_1 = Y_1,
+  Y_2 = Y_2
+)
+```
+
+## **Úrdráttur**
+
+Í þessari tilraun voru áhrifa ýmissa þátta á sviftíma ($Y_1$) og lendingarnákvæmni ($Y_2$) bréfaþyrlna könnuð með $2^5$ þáttatilraun. Fimm þættir voru valdir; breidd þyrlunnar, lengd þyrlunnar, vængjalengd, notkun bréfaklemmu og límband á vængjum. Það sem var mælt var sviftími (sek.) og lárétt lendingarfjarlægðar (cm) frá upphafspunkti eftir sleppingu úr 3,88 m hæð.
+
+Gagnaúrvinnsla fór fram með Yates-algrími og staðfest með normaldreifingariti og ANOVA-greiningum. Niðurstöður sýndu að einungis vængjalengd (C) hafði marktæk áhrif á sviftíma ($Y_1$). Þ.e.a.s. lengri vængir skiluðu marktækt lengri sviftíma.
+
+Lendingarnákvæmni ($Y_2$) var aðallega undir áhrifum bréfaklemmu (D), límbands (E) og víxlverkunar milli vængjalengdar og bréfaklemmu (C×D). Bréfaklemma bætti lendingarnákvæmni (minnkaði fjarlægð) en áhrifin voru sterkari fyrir styttri vængi. Límband jók einnig nákvæmni, en áhrif þess voru minni en áhrif bréfaklemmunnar.
+
+Lokaaðhvarfslíkön eru eftirfarandi:
+
+**Sviftími:**
+$$Y_1 = 2.871 + 0.750 \cdot C$$
+
+**Lengdarnákvæmni:**
+$$Y_2 = 45.813 -47.875\cdot D + 14.625\cdot E + 32.5 \cdot DC$$
+Niðurstöðurnar veita leiðbeiningar fyrir hönnun bréfaþyrla, hvort heldur stefnt er að hámarks sviftíma eða bestu lendingarnákvæmni. Með því að velja lengri vængi næst aukinn sviftími, en fyrir aukna nákvæmni í lendingu eru styttri vængir ásamt notkun bréfaklemmu ákjósanlegir. Ef markmið er að ná fram góðum eiginleikum beggja þátta, má hanna þyrlu með löngum vængjum og bæta við bréfaklemmu. Þessar niðurstöður styðja við áframhaldandi rannsóknir og þróun á lofttæknilegri virkni bréfaþyrla.
+
+## **Inngangur**
+
+Hönnun bréfaþyrla er áhugavert dæmi um hvernig beita má aðferðum tilraunahönnunar og tölfræðigreiningar til að bæta lofttæknilega eiginleika einfaldra smíða. Þessi skýrsla fjallar um tilraun þar sem markmiðið er að greina hvaða þættir hafa áhrif á tvo mikilvæga eiginleika bréfaþyrla: sviftíma (tímann sem tekur þyrluna að svífa niður) og lendingarnákvæmni (lárétta fjarlægð frá upphafspunkti).
+
+Viðfangsefni verkefnisins var að kanna áhrif fimm lykilþátta með því að framkvæma $2^5$ þáttatilraun. Þættirnir sem skoðaðir voru eru breidd þyrlu, lengd þyrlu, vængjalengd, notkun bréfaklemmu og notkun límbands. Mælingar fóru fram í stöðluðu umhverfi með það fyrir augum að finna hvaða breytur hafa mest áhrif og hvort einhverjir þættir vinna saman (víxlhrif).
+
+Tilgangur verkefnisins er tvíþættur: Í fyrsta lagi að öðlast betri skilning á því hvernig tilraunahönnun og tölfræðigreining hjálpa til við að greina áhrifavalda, og í öðru lagi að nýta þá þekkingu til að hanna þyrlur með betri eiginleika. Verkefnið getur því bæði nýst sem hagnýt leiðbeining fyrir framtíðarhönnun og sem dæmi um aðferðarfræði í tæknilegum rannsóknum.
+
+## **Áhrifavaldar og val á þáttum**
+
+### **Umræður um mögulega þætti**
+
+Eftirfarandi þættir geta haft áhrif á sviftíma og lendingarnákvæmni bréfaþyrla:
+
+  - Breidd þyrlunnar
+  - Lengd þyrlunnar
+  - Vængjalengd
+  - Notkun bréfaklemmu
+  - Límband á vængjum
+  - Þyngd pappírsins
+  - Symmetría vængja
+  - Fellingar á vængjum
+  -  Raka- og lofthitastig
+  - Snúningshraði við sleppingu
+
+### **Endanlegt val á þáttum fyrir $2^k$ tilraun**
+
+Fimm þættir voru valdir fyrir $2^5$ tilraun ($k = 5$):
+
+| **Breyta**  | **Lág gildi (–)** | **Hátt gildi (+)** | **Rökstuðningur** |**Áhrifaþættir** |
+|-----------------|-----------------------|------------------------|------------------------------------------|----------------------|
+| **Breidd**      | 3 cm                  | 5 cm                   | Hefur áhrif á lofthitadreifingu          | a                    |
+| **Lengd**       | 8 cm                  | 13 cm                  | Áhrif á massadreifingu og stabilitet     | b                    |
+| **Vængjalengd** | 8 cm                  | 13 cm                  | Hefur áhrif á lyftikraft                 | c                    |
+| **Bréfaklemma** |  Nei                   | Já                     | Bætir við massa og tilfærir þyngdarpunkt | d                    |
+| **Límband**     | Nei                   | Já                     | Breytir yfirborðsviðnámi og vængstyrk    | e                    |
+*Tafla 1: Val á áhrifaþáttum*
+
+Vert er að taka fram að fjöldi mælinga $n = 1$ endurtekningar á hverri samsetningu.
+
+### **Aðferð til að lágmarka pappírsnotkun**
+
+Búnar voru til 8 þyrlur – ein fyrir hverja samsetningu af breidd (3cm eða 5cm), lengd (8cm eða 13cm) og vængjalengd (8cm eða 13cm). Þannig voru allir 2×2×2 = 8 möguleikar prófaðir fyrir þyrlulögun.
+
+Hver þyrla var notuð í 4 prófanir:
+
+- Með/án bréfaklemmu
+- Með/án límbands
+
+Þannig nýttist hver þyrla í 4 keyrslur tilraunarinnar og allur pappír fullnýttur.
+
+## **Framkvæmd tilraunarinnar**
+
+### **Efni og aðstæður**
+
+- Sleppihæð: 3,88m (Uppi í stiga á 3.hæð í VR-2)
+- Notaður pappír: A4, $80 \frac{g}{m^2}$
+- Þyrlur voru hannaðar og merktar eftir samsetningum breytanna.
+
+![*Mynd 1: Þyrlur*](myndir\þyrlur.JPEG)
+
+### **Tilraunaferli**
+
+Þyrlunum var sleppt efst í tröppunum þar sem einstaklingur stóð með hendina lárétt fyrir framan sig. Beint fyrir neðan upphafspunkt þyrlunnar hafði verið merktur punktur sem notaður var til þess að mæla lendingarfjarlægð frá upphafspúnkti. Maðurinn telur niður og sleppir þyrlunni. Á sama tíma var tími settur af stað í síma og stoppaður um leið og þyrlan lendir í gólfinu. Lengd frá upphafspunkti var mæld með mæliforriti í síma.
+
+### **Mælibreytur**
+
+- **Sviftími ($Y_1$)**: mældur í sekúndum með skeiðklukkur í síma
+- **Lárétt fjarlægð ($Y_2$)**: mældur í cm með mæliforriti í síma
+
+### **Óvissu þættir**
+
+**Stýranlegir**:
+
+ - Sleppihæð og horn við sleppingu
+ - Hönnun og samsetning þyrlna
+ - Tímasetning mælinga (t.d. tíminn sem líður frá því að tíminn er ræstur þar til honum er lokið)
+ - Mæliforrit og virkni þess í snjallsíma
+
+**Óstýranlegir**:
+
+- Loftstreymi í herbergi
+- Smávægilegar breytingar í pappírssniði
+- Snúningshraði við sleppingu
+
+
+## **Gagnaúrvinnsla og tölfræðileg greining**
+
+### **Gagnasöfnun**
+
+Sett var upp tafla í google sheets (Sjá töflu 2). Hún var sett upp þannig að hægt væri að taka mælingar fyrir hverja þyrlu og áhrifaþáttum bætt við hana.
+
+|  |  | **(1)** |  | **d** |  | **e** |  | **de** |  |
+|-------|----------|---------|-------|-------|-------|-------|-------|--------|-------|
+| **Þyrla** | **Þættir**   | **Y1**      | **Y2**    | **Y1**    | **Y2**    | **Y1**    | **Y2**    | **Y1**     | **Y2**    |
+| **1**     | **(1)**      | 3.1     | 21    | 2.95  | 11    | 3.21  | 30    | 2.76   | 6     |
+| **2**     | **a**        | 2.68    | 11    | 3.26  | 8     | 3.05  | 86    | 2.9    | 7     |
+| **3**     | **b**        | 3.13    | 60    | 2.65  | 4     | 2.71  | 125   | 2.43   | 2     |
+| **4**     | **ab**       | 2.51    | 31    | 2.96  | 4     | 3.08  | 61    | 2.55   | 0     |
+| **5**     | **c**        | 4.3     | 37    | 3.83  | 21    | 2.96  | 0     | 3.95   | 21    |
+| **6**     | **ac**       | 3.73    | 24    | 4.08  | 7     | 3.01  | 41    | 3.89   | 17    |
+| **7**     | **bc**       | 3.33    | 10    | 3.03  | 8     | 3.51  | 37    | 3.45   | 10    |
+| **8**     | **abc**      | 4.16    | 30    | 3.88  | 6     | 3.48  | 59    | 3.33   | 25    |
+*Tafla 2: Gagnasöfnun*
+
+
+## **Notkun Yates-algrímsins**
+
+Gögnin voru síðan setta í tvær mismunandi töflur fyrir $Y_1$ og $Y_2$. Við notuðum Yates algrímið til þess að reikna `contasta` áhrifaþáttanna og þannig reikna `SS (sum og squares)` og `Áhrif` (Sjá á töflur 3 og 4).
+
+| **Þættir** | **Y1** | **1** | **2** | **3** | **4** | **5**  | **SS** | **Áhrif** |
+|------------|----------|-------|-------|-------|-------|--------|--------|-----------|
+| (1)        | 3.1      | 5.78  | 11.42 | 26.94 | 53.58 | 103.85 |        |           |
+| a          | 2.68     | 5.64  | 15.52 | 26.64 | 50.27 | 1.25   | 0.05   | 0.08      |
+| b          | 3.13     | 8.03  | 11.82 | 25.01 | 0.94  | -3.47  | 0.38   | -0.22     |
+| ab         | 2.51     | 7.49  | 14.82 | 25.26 | 0.31  | 2.17   | 0.15   | 0.14      |
+| c          | 4.3      | 6.21  | 12.05 | -0.78 | -2.28 | 11.99  | 4.49   | 0.75      |
+| ac         | 3.73     | 5.61  | 12.96 | 1.72  | -1.19 | 1.15   | 0.04   | 0.07      |
+| bc         | 3.33     | 7.91  | 10.64 | 0.23  | 1.8   | 0.31   | 0.00   | 0.02      |
+| abc        | 4.16     | 6.91  | 14.62 | 0.08  | 0.37  | 1.55   | 0.08   | 0.10      |
+| d          | 2.95     | 6.26  | -1.04 | -0.68 | 7.1   | -0.05  | 0.00   | 0.00      |
+| ad         | 3.26     | 5.79  | 0.26  | -1.6  | 4.89  | 2.35   | 0.17   | 0.15      |
+| bd         | 2.65     | 5.97  | 0.62  | 0.55  | 1.78  | -3.21  | 0.32   | -0.20     |
+| abd        | 2.96     | 6.99  | 1.1   | -1.74 | -0.63 | -1.13  | 0.04   | -0.07     |
+| dc         | 3.83     | 5.66  | 0.21  | 1.2   | -0.8  | 1.97   | 0.12   | 0.12      |
+| acd        | 4.08     | 4.98  | 0.02  | 0.6   | 1.11  | -1.07  | 0.04   | -0.07     |
+| bcd        | 3.03     | 7.84  | 0.26  | 0.45  | 2.2   | -1.87  | 0.11   | -0.12     |
+| abcd       | 3.88     | 6.78  | -0.18 | -0.08 | -0.65 | -0.43  | 0.01   | -0.03     |
+| e          | 3.21     | -0.42 | -0.14 | 4.1   | -0.3  | -3.31  | 0.34   | -0.21     |
+| ae         | 3.05     | -0.62 | -0.54 | 3     | 0.25  | -0.63  | 0.01   | -0.04     |
+| be         | 2.71     | -0.57 | -0.6  | 0.91  | 2.5   | 1.09   | 0.04   | 0.07      |
+| abe        | 3.08     | 0.83  | -1    | 3.98  | -0.15 | -1.43  | 0.06   | -0.09     |
+| ce         | 2.96     | 0.31  | -0.47 | 1.3   | -0.92 | -2.21  | 0.15   | -0.14     |
+| ace        | 3.01     | 0.31  | 1.02  | 0.48  | -2.29 | -2.41  | 0.18   | -0.15     |
+| bce        | 3.51     | 0.25  | -0.68 | -0.19 | -0.6  | 1.91   | 0.11   | 0.12      |
+| abce       | 3.48     | 0.85  | -1.06 | -0.44 | -0.53 | -2.85  | 0.25   | -0.18     |
+| de         | 2.76     | -0.16 | -0.2  | -0.4  | -1.1  | 0.55   | 0.01   | 0.03      |
+| ade        | 2.9      | 0.37  | 1.4   | -0.4  | 3.07  | -2.65  | 0.22   | -0.17     |
+| bde        | 2.43     | 0.05  | 0     | 1.49  | -0.82 | -1.37  | 0.06   | -0.09     |
+| abde       | 2.55     | -0.03 | 0.6   | -0.38 | -0.25 | 0.07   | 0.00   | 0.00      |
+| cde        | 3.95     | 0.14  | 0.53  | 1.6   | 0     | 4.17   | 0.54   | 0.26      |
+| acde       | 3.89     | 0.12  | -0.08 | 0.6   | -1.87 | 0.57   | 0.01   | 0.04      |
+| bcde       | 3.45     | -0.06 | -0.02 | -0.61 | -1    | -1.87  | 0.11   | -0.12     |
+| abcde      | 3.33     | -0.12 | -0.06 | -0.04 | 0.57  | 1.57   | 0.08   | 0.10      |
+*Tafla 3: Yates algrím fyrir $Y_1$*
+
+| **Þættir** | **Y2** | **1** | **2** | **3** | **4** | **5** | **áhrif** | **SS** |
+|------------|----------|-------|-------|-------|-------|-------|-----------|--------|
+| (1)        | 21       | 32    | 123   | 224   | 293   | 820   |           |        |
+| a          | 11       | 91    | 101   | 69    | 527   | 14    | 0.88      | 6.1    |
+| b          | 60       | 61    | 27    | 439   | -51   | 124   | 7.75      | 480.5  |
+| ab         | 31       | 40    | 42    | 88    | 65    | -94   | -5.88     | 276.1  |
+| c          | 37       | 19    | 302   | -32   | 13    | -114  | -7.13     | 406.1  |
+| ac         | 24       | 8     | 137   | -19   | 111   | 116   | 7.25      | 420.5  |
+| bc         | 10       | 28    | 15    | 55    | 29    | -90   | -5.63     | 253.1  |
+| abc        | 30       | 14    | 73    | 10    | -123  | 184   | 11.50     | 1058.0 |
+| d          | 11       | 116   | -39   | 38    | -7    | -506  | -31.63    | 8001.1 |
+| ad         | 8        | 186   | 7     | -25   | -107  | -32   | -2.00     | 32.0   |
+| bd         | 4        | 41    | -3    | 125   | 33    | -202  | -12.63    | 1275.1 |
+| abd        | 4        | 96    | -16   | -14   | 83    | 156   | 9.75      | 760.5  |
+| dc         | 21       | 13    | -8    | 14    | -83   | 260   | 16.25     | 2112.5 |
+| acd        | 7        | 2     | 63    | 15    | -7    | -118  | -7.38     | 435.1  |
+| bcd        | 8        | 38    | -1    | -139  | 61    | 100   | 6.25      | 312.5  |
+| abcd       | 6        | 35    | 11    | 16    | 123   | -122  | -7.63     | 465.1  |
+| e          | 30       | -10   | 59    | -22   | -155  | 234   | 14.63     | 1711.1 |
+| ae         | 86       | -29   | -21   | 15    | -351  | 116   | 7.25      | 420.5  |
+| be         | 125      | -13   | -11   | -165  | 13    | 98    | 6.13      | 300.1  |
+| abe        | 61       | 20    | -14   | 58    | -45   | -152  | -9.50     | 722.0  |
+| ce         | 0        | -3    | 70    | 46    | -63   | -100  | -6.25     | 312.5  |
+| ace        | 41       | 0     | 55    | -13   | -139  | 50    | 3.13      | 78.1   |
+| bce        | 37       | -14   | -11   | 71    | 1     | 76    | 4.75      | 180.5  |
+| abce       | 59       | -2    | -3    | 12    | 155   | 62    | 3.88      | 120.1  |
+| de         | 6        | 56    | -19   | -80   | 37    | -196  | -12.25    | 1200.5 |
+| ade        | 7        | -64   | 33    | -3    | 223   | -58   | -3.63     | 105.1  |
+| bde        | 2        | 41    | 3     | -15   | -59   | -76   | -4.75     | 180.5  |
+| abde       | 0        | 22    | 12    | 8     | -59   | 154   | 9.63      | 741.1  |
+| cde        | 21       | 1     | -120  | 52    | 77    | 186   | 11.63     | 1081.1 |
+| acde       | 17       | -2    | -19   | 9     | 23    | 0     | 0.00      | 0.0    |
+| bcde       | 10       | -4    | -3    | 101   | -43   | -54   | -3.38     | 91.1   |
+| abcde      | 25       | 15    | 19    | 22    | -79   | -36   | -2.25     | 40.5   |
+
+*Tafla 4: Yates algrím fyrir $Y_2$*
+
+### **Normallíkindarit**
+
+Normallíkindarit var notað til að greina hvaða þættir höfðu marktæk áhrif með því að skoða hversu mikið þeir skáru sig úr heildarmynstrinu.
+
+Hér má sjá Normal probabiliry plot fyrir áhrif $Y_1$
+
+```{r}
+# Gögnin þín fyrir Y1
+values <- c(0.08, -0.22, 0.14, 0.75, 0.07, 0.02, 0.10, 0.00, 0.15, -0.20,
+            -0.07, 0.12, -0.07, -0.12, -0.03, -0.21, -0.04, 0.07, -0.09, -0.14,
+            -0.15, 0.12, -0.18, 0.03, -0.17, -0.09, 0.00, 0.26, 0.04, -0.12, 0.10)
+
+labels <- c("a", "b", "ab", "c", "ac", "bc", "abc", "d", "ad", "bd", "abd", "dc",
+            "acd", "bcd", "abcd", "e", "ae", "be", "abe", "ce", "ace", "bce", "abce",
+            "de", "ade", "bde", "abde", "cde", "acde", "bcde", "abcde")
+
+# Búa til Q-Q plot og fá punktana til að skila sér staðsetningum
+qq <- qqnorm(values,
+             main = "Normal Q-Q Plot Y_1",
+             xlab = "Þjálfaðri þvottavísitala (Theoretical Quantiles)",
+             ylab = "Raungildi (Sample Quantiles)",
+             pch = 19)  # pch 19 fyrir punkta
+
+qqline(values, col = "red", lwd = 2)
+grid()
+
+# Merkjum punktana með texta - notum pos = 4 til að setja textann til hægri við punkta
+text(qq$x, qq$y, labels = labels, pos = 4, cex = 0.7)
+
+```
+
+Hér sést að að tvær þættir skera sig greinileg frá mynstrinu en það eru þættir $B$ og $C$. Einnig er hægt að sjá að þættir $E$ og víxlverkun $AD$ skera sig aðeins út. Þessir þættir verða skoðaðir betur í ANOVA greiningu.
+
+Næst sjáum við Normallíkindarit fyrir áhrif $Y_2$.
+
+```{r}
+# Gögnin þín fyrir Y2
+values <- c(0.875, 7.75, -5.875, -7.125, 7.25, -5.625, 11.5, -31.625, -2, -12.625,
+            9.75, 16.25, -7.375, 6.25, -7.625, 14.625, 7.25, 6.125, -9.5, -6.25,
+            3.125, 4.75, 3.875, -12.25, -3.625, -4.75, 9.625, 11.625, 0, -3.375, -2.25)
+
+labels <- c("a", "b", "ab", "c", "ac", "bc", "abc", "d", "ad", "bd", "abd", "dc",
+            "acd", "bcd", "abcd", "e", "ae", "be", "abe", "ce", "ace", "bce", "abce",
+            "de", "ade", "bde", "abde", "cde", "acde", "bcde", "abcde")
+
+# Búa til Q-Q plot og fá punktanna hnit
+qq <- qqnorm(values,
+             main = "Normal Q-Q Plot Y_2",
+             xlab = "Þjálfaðri þvottavísitala (Theoretical Quantiles)",
+             ylab = "Raungildi (Sample Quantiles)",
+             pch = 19)  # pch 19 fyrir fallega punkta
+
+qqline(values, col = "red", lwd = 2)
+grid()
+
+# Merkjum punktana með labels úr breytunni 'labels'
+text(qq$x, qq$y, labels = labels, pos = 1, cex = 0.7)
+```
+
+Hér eru einnig tvær þættir sem skera sig greinilega út en það eru $D$ og $DC$. Einnig er hægt að sjá að víxlverkanir $BD$, $CDE$ og þáttur $E$ skera sig aðeins út. Þessir þættir verað skoðaðir betur í ANOVA greiningu.
+
+### **Anova-greining**
+
+Nú munum við skoða þættina en betur og athuga marktækni þeirra
+
+### **Anova $Y_1$**
+
+```{r}
+# 4. ANOVA-greining fyrir Y_1 með þáttum b og c:
+model_Y1 <- aov(Y_1 ~ b + c_var +  a*d + e, data = df)
+summary(model_Y1)
+```
+
+Áhrifa þáttur $C$ eini þáttur sem að er nægilega marktækur (miða við $\alpha = 0.05$)
+
+### **Anova $Y_2$**
+
+```{r}
+# 5. ANOVA-greining fyrir Y_2 með þáttum d og c:
+model_Y2 <- aov(Y_2 ~ d + c_var*d + b*d + e + c_var*d*e , data = df)
+summary(model_Y2)
+```
+
+Áhrifa þættir $D$, $E$ og víxlverkun $DC$ sýna nægilega marktækni.
+
+## **Aðhvarfsgreining og líkön**
+
+### **Líkan fyrir sviftíma ($Y_1$)**
+
+Fyrir $Y_1$ er aðeins þáttur $C$ marktækur. Aðhvarfslíkanið verður því:
+
+$$Y_1 = \beta_0 + \beta_C \cdot C + \epsilon$$
+
+R leggur mat á stuðla aðhvarfslíkansins:
+
+```{r}
+model_Y1 <- aov(Y_1 ~ c_var, data = df)
+coef(model_Y1)
+```
+
+Fullbúið mat á sviftíma ($Y_1$) er þá:
+
+$$Y_1 = 2.871 + 0.750 \cdot C$$
+
+### **Líkan fyrir lendingarnákvæmni ($Y_2$)**
+
+Fyrir $Y_1$ eru þættir $D$, $E$ og víxlvlverkun $DC$ marktækir/t. Aðhvarfslíkanið verður því:
+
+$$Y_2 = \gamma_0 + \gamma_D \cdot D + \gamma_E \cdot E + \gamma_{DC} \cdot (DC) + \epsilon$$
+R leggur mat á stuðla aðhvarfslíkanisinnsi:
+
+```{r}
+model_Y1 <- aov(Y_2 ~ d + e + d*c_var, data = df)
+coef(model_Y1)
+```
+
+Fullbúið mat á lárétta lengd frá upphafspunkti ($Y_2$) er þá:
+
+$$Y_2 = 45.813 -47.875\cdot D + 14.625\cdot E + 32.5 \cdot DC$$
+
+Til að varpa betra ljósi á þessi víxlhrif var teiknað svokallað víxlverkunarrit (e. interaction plot), þar sem meðaltal $Y_2$ er sett fram fyrir hverja samsetningu af gildum þátta $C$ (vængjalengd) og $D$ (bréfaklemma).
+
+Á myndinni hér að neðan má sjá hvernig áhrif þáttarins $D$ er háð því hvaða gildi $C$ tekur:
+
+```{r}
+interaction.plot(x.factor = df$c_var,          # x-ásinn táknar stig C
+                 trace.factor = df$d,      # línurnar tákna mismunandi stigin af D
+                 response = df$Y_2,         # svarbreytan sem er mæld
+                 fun = mean,               # reiknar meðaltal fyrir hvern samsettan punkt
+                 type = "b",               # bæði punkta- og línurit
+                 legend = TRUE,            # bætir við skýringarlegu
+                 xlab = "Stig C",          # titill á x-ás
+                 ylab = "Meðaltal Y2",       # titill á y-ás
+                 trace.label = "Stig D")   # titill fyrir línuskrá
+
+```
+
+- Ef $C = 0$ (styttri vængjalengd), hefur bréfaklemma nákvæmari áhrif á lendingarnákvæmni – meðaltal $Y_2$ er mun lægra þegar $D=1$ heldur þegar $D=0$.
+
+- Ef $C=1$ (lengri vængjalengd), virðast áhrif bréfaklemmu hins vegar minnka nákvæmni.
+
+– meðaltal $Y_2$ hækkar þegar $D=1$ bætist við.
+
+## **Niðurstöður**
+
+Tilraunin leiddi í ljós eftirfarandi lykilatriði varðandi áhrif mismunandi þátta á sviftíma ($Y_1$) og lendingarnákvæmni ($Y_2$):
+
+### **Sviftími ($Y_1$)**
+
+Helsti áhrifaþáttur fyrir sviftíma reyndist vera vængjalengd ($C$). Aðrir þættir höfðu lítil sem engin marktæk áhrif þegar tekið var mið af tölfræðiprófunum.
+
+Lengri vængjalengd (13 cm) skilaði marktækt lengri sviftíma samanborið við styttri vængi (8 cm). Þetta er líklega vegna aukins lyftikrafts sem lengri vængir skapa.
+
+Endanlegt aðhvarfslíkan fyrir sviftíma er því:
+
+$$Y_1 = 2.871 + 0.750 \cdot C$$
+
+Það þýðir að með því að velja lengri vængjalengd má auka meðalsviftíma þyrlunnar um allt að 0,75 sekúndur.
+
+### **Lendingarnákvæmni ($Y_2$)**
+
+Helstu áhrifaþættir á lendingarnákvæmni voru:
+
+- Bréfaklemma (D): Marktækasti þátturinn. Þegar bréfaklemma er notuð minnkar lárétt fjarlægð frá upphafspunkti marktækt, sem þýðir meiri nákvæmni.
+
+- Límband (E): Hafði einnig marktæk jákvæð áhrif á nákvæmni við lendingu (minni fjarlægð frá upphafspunkti).
+
+- Víxlhrif milli vængjalengdar og bréfaklemmu (C×D) voru sterk og marktæk, sem þýðir að áhrif bréfaklemmu ráðast einnig af vængjalengd þyrlunnar:
+
+  - Fyrir stutta vængi (C = 0) eykur bréfaklemma nákvæmni töluvert (lækkar lárétta fjarlægð).
+  
+  - Fyrir lengri vængi (C = 1) virðist notkun bréfaklemmu ekki bæta nákvæmni á sama hátt; í sumum tilfellum minnka áhrifin eða geta snúist við.
+  
+Endanlegt aðhvarfslíkan fyrir lendingarnákvæmni er:
+
+$$Y_2 = 45.813 -47.875\cdot D + 14.625\cdot E + 32.5 \cdot DC$$
+Líkanið gefur til kynna að besta lendingarnákvæmni (styttra frá upphafspunkti) náist með því að nota bréfaklemmu, án límbands og nota styttri vængjalengd.
+
+## **Ályktanir**
+
+Með því að nýta þessar niðurstöður er hægt að hanna bréfaþyrlu með aukinn sviftíma (lengri vængir) eða nákvæmari lendingu (styttri vængir með bréfaklemmu án límbands), allt eftir því hvaða eiginleiki er mikilvægari fyrir tiltekinn tilgang.
+
+Ef markmiðið er að sameina kosti beggja þátta, þá væri skynsamlegt að hanna þyrlu með löngum vængjum fyrir lengri sviftíma og bæta við bréfaklemmu til að auka nákvæmni við lendingu, þ.e.a.s. $C=D=1$.
+
+Þessar upplýsingar eru gagnlegar til áframhaldandi hönnunar og prófunar bréfaþyrla eða annarra svipaðra smíða, þar sem áherslan liggur á lofttæknilegum eiginleikum og stöðugleika.
+
+## **Viðauki**
+
+### 1. **Gagnavinnsla**
+
+```{r}
+# 1. Skilgreinum hvaða samsetningar (treatment combinations) eru í gangi:
+combinations <- c(
+  "(1)","a","b","ab","c","ac","bc","abc",
+  "d","ad","bd","abd","dc","acd","bcd","abcd",
+  "e","ae","be","abe","ce","ace","bce","abce",
+  "de","ade","bde","abde","cde","acde","bcde","abcde"
+)
+
+# 2. Skilgreinum svörun Y_1 í sömu röð:
+Y_1 <- c(
+  3.1, 2.68, 3.13, 2.51, 4.3, 3.73, 3.33, 4.16,
+  2.95, 3.26, 2.65, 2.96, 3.83, 4.08, 3.03, 3.88,
+  3.21, 3.05, 2.71, 3.08, 2.96, 3.01, 3.51, 3.48,
+  2.76, 2.90, 2.43, 2.55, 3.95, 3.89, 3.45, 3.33
+)
+
+# 3. Skilgreinum svörun Y_2 í sömu röð:
+Y_2 <- c(
+  21, 11, 60, 31, 37, 24, 10, 30,
+  11,  8,  4,  4, 21,  7,  8,  6,
+  30, 86,125, 61,  0, 41, 37, 59,
+   6,  7,  2,  0, 21, 17, 10, 25
+)
+
+# 4. Búum til dálka fyrir hvern þátt a, b, c, d, e sem 0/1-breytur.
+#    Við athugum hvort samsetningin innihaldi stafinn 'a', 'b', 'c', 'd', eða 'e':
+a_fac <- as.numeric(grepl("a", combinations))
+b_fac <- as.numeric(grepl("b", combinations))
+c_fac <- as.numeric(grepl("c", combinations))
+d_fac <- as.numeric(grepl("d", combinations))
+e_fac <- as.numeric(grepl("e", combinations))
+
+# 5. Búum til lokagögnin sem data.frame:
+df <- data.frame(
+  combination = combinations,
+  a = a_fac,
+  b = b_fac,
+  c_var = c_fac,
+  d = d_fac,
+  e = e_fac,
+  Y_1 = Y_1,
+  Y_2 = Y_2
+)
+```
