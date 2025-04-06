@@ -3,7 +3,7 @@ title: "**Tækniskýrsla - Hönnun og framkvæmd tilrauna**"
 author: "Brynjar Ari, Einar Geir, Halldór Andri og Jakob Stefán"
 date: "2025-04-02"
 output: 
-  html_document:
+  html_document: 
     theme: lumen
 ---
 
@@ -440,9 +440,11 @@ Líkanið gefur til kynna að besta lendingarnákvæmni (styttra frá upphafspun
 
 Með því að nýta þessar niðurstöður er hægt að hanna bréfaþyrlu með aukinn sviftíma (lengri vængir) eða nákvæmari lendingu (styttri vængir með bréfaklemmu án límbands), allt eftir því hvaða eiginleiki er mikilvægari fyrir tiltekinn tilgang.
 
-Ef markmiðið er að sameina kosti beggja þátta, þá væri skynsamlegt að hanna þyrlu með löngum vængjum fyrir lengri sviftíma og bæta við bréfaklemmu til að auka nákvæmni við lendingu, þ.e.a.s. $C=D=1$.
+Ef markmið hönnunar er að hámarka sviftíma, þá er lykilatriðið að velja lengri vængi (13 cm). Þetta val skilar marktækri aukningu í sviftíma vegna aukins lyftikrafts, eins og staðfest var með ANOVA-greiningu. Hins vegar ætti að forðast óþarfa aukningu á massa (t.d. bréfaklemma eða límband) þar sem þau bæta ekki marktækt við sviftímann.
 
-Þessar upplýsingar eru gagnlegar til áframhaldandi hönnunar og prófunar bréfaþyrla eða annarra svipaðra smíða, þar sem áherslan liggur á lofttæknilegum eiginleikum og stöðugleika.
+Ef áhersla er á að ná sem bestri lendingarnákvæmni, þá er skynsamlegt að nota bréfaklemmu á þyrlur með styttri vængjum (8 cm). Þetta bætir verulega lendingarnákvæmni með því að færa þyngdarpunkt þyrlunnar neðar og auka stöðugleika hennar. Notkun límbands getur einnig bætt nákvæmni en áhrif þess eru minni miðað við bréfaklemmuna.
+
+Vilji hönnuðurinn samþætta bæði hámarks sviftíma og góða lendingarnákvæmni gæti góður kostur verið að hanna þyrlu með lengri vængjum (til að tryggja sviftíma) ásamt því að bæta við bréfaklemmu. Þessi hönnun tryggir að þyrlan nýti kosti beggja þátta; lengri sviftíma og aukinn stöðugleika við lendingu.
 
 ## **Viðauki**
 
