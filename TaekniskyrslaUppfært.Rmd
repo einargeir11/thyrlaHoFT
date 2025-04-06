@@ -289,7 +289,7 @@ text(qq$x, qq$y, labels = labels, pos = 4, cex = 0.7)
 
 ```
 
-Hér sést að að tvær þættir skera sig greinileg frá mynstrinu en það eru þættir $B$ og $C$. Einnig er hægt að sjá að þættir $E$ og víxlverkun $AD$ skera sig aðeins út. Þessir þættir verða skoðaðir betur í ANOVA greiningu.
+Hér sést að að tveir þættir skera sig greinileg frá mynstrinu en það eru þættir $B$ og $C$. Einnig er hægt að sjá að þættir $E$ og víxlverkun $AD$ skera sig aðeins út. Þessir þættir verða skoðaðir betur í ANOVA greiningu.
 
 Næst sjáum við Normallíkindarit fyrir áhrif $Y_2$.
 
@@ -317,7 +317,7 @@ grid()
 text(qq$x, qq$y, labels = labels, pos = 1, cex = 0.7)
 ```
 
-Hér eru einnig tvær þættir sem skera sig greinilega út en það eru $D$ og $DC$. Einnig er hægt að sjá að víxlverkanir $BD$, $CDE$ og þáttur $E$ skera sig aðeins út. Þessir þættir verað skoðaðir betur í ANOVA greiningu.
+Hér eru einnig tveir þættir sem skera sig greinilega út en það eru $D$ og $DC$. Einnig er hægt að sjá að víxlverkanir $BD$, $CDE$ og þáttur $E$ skera sig aðeins út. Þessir þættir verað skoðaðir betur í ANOVA greiningu.
 
 ### **Anova-greining**
 
